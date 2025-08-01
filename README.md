@@ -1,50 +1,49 @@
-## Android  扫码枪 读取（外接键盘读取）
+## Android  Escáner de códigos de barras (lectura mediante teclado externo)
 
-### 1、概述
-android 设备外接一个 标准扫码枪，要把扫码枪扫到的内容取出来。界面上放一个EditTextView 直接就把内容显示到EditTextView中了。 然而有些界面上并不能摆EditTextView 。针对没有EditTextView的界面展开下文。扫码枪和外接键盘原理是一样的，类比，也特意拿了个外接键盘一起调研了。
+### 1. Resumen general
+Se conecta un escáner de códigos de barras estándar a un dispositivo Android para extraer el contenido escaneado por el escáner. Se coloca un EditTextView en la interfaz para mostrar directamente el contenido en el EditTextView. Sin embargo, en algunas interfaces no se puede colocar un EditTextView. A continuación se describe el procedimiento para las interfaces que no tienen EditTextView. El escáner de códigos de barras y el teclado externo funcionan según el mismo principio, por lo que se ha investigado también el teclado externo.
 
-### 2、扫码枪-输入设备
-项目中使用的是标准的扫码枪（实验的是新大陆的NLS-FR40），标准的意思就是它都不给开发文档。查了下说是走的标准“输入事件”，和外接键盘是一样的。既然是输入事件，就掐Activity 的 dispatchKeyEvent 方法了。
-
+Traducción realizada con la versión gratuita del traductor DeepL.com
+### 2. Escáner de códigos de barras - Dispositivo de entrada
+n el proyecto se utiliza un escáner de códigos de barras estándar (el modelo NLS-FR40 de Newland). Por «estándar» se entiende que no se proporcionan documentos de desarrollo. Tras investigar, se descubrió que utiliza el estándar «evento de entrada», igual que un teclado externo. Al tratarse de un evento de entrada, se utiliza el método dispatchKeyEvent de Activity.
 ```@Override
     public boolean dispatchKeyEvent(KeyEvent event) {
 ```
 
- 扫码枪在识别到扫的码后，会多一个KEYCODE_ENTER，和KEYCODE_DPAD_DOWN 事件，查阅的资料里都有说到KEYCODE_ENTER，没提到KEYCODE_DPAD_DOWN，也不知道其它扫码枪会不会生成这个事件
-### 3、实验结果
-在Activity 的dispatchKeyEvent 方法中把 KeyEvent  log 打印了下：（只打出action=ACTION_UP 躺起的log，按下action=ACTION_DOWN 是结队的 忽略）
+Cuando el escáner de códigos de barras reconoce el código escaneado, se generan dos eventos: KEYCODE_ENTER y KEYCODE_DPAD_DOWN. En la documentación consultada se menciona KEYCODE_ENTER, pero no se hace referencia a KEYCODE_DPAD_DOWN, y tampoco se sabe si otros escáneres de códigos de barras generan este evento.
+### 3. Resultados del experimento
+En el método dispatchKeyEvent de Activity, se imprimió el registro de KeyEvent: (solo se imprimió el registro de acción = ACTION_UP, se ignoró la acción = ACTION_DOWN).
 
- - 3.1、android 设备软键盘的log
+- 3.1. Registro del teclado virtual de los dispositivos Android.
 ![在这里插入图片描述](image/inputkey.png)
 
- - 3.2、外接扫码枪的log （新大陆的NLS-FR40）
+- 3.2. Registro del escáner externo (NLS-FR40 de Newland)
  ![在这里插入图片描述](image/scanner.png)
 
- - 3.2、外接键盘的log （普通的键盘）
+- 3.2. Registro del teclado externo (teclado estándar)
 ![在这里插入图片描述](image/keyboard.png)
-这里附一句，若小键盘的num按钮锁住，metaState= meta_num_lock_on
+   Aquí va una nota: si la tecla Num del teclado numérico está bloqueada, metaState = meta_num_lock_on.
 
-对比结论小结：
-1. 标准外接扫描枪和标准外接键盘是类似的输入设备
-2. 自带软件盘的输入事件里，deviceId，source，scanCode，flag 和外接的设备不同
-3. 扫码枪和外接键盘的 deviceId，source 不同
+Resumen de conclusiones comparativas:
+1. El escáner externo estándar y el teclado externo estándar son dispositivos de entrada similares.
+2. En los eventos de entrada del disco de software incluido, los valores de deviceId, source, scanCode y flag difieren de los de los dispositivos externos.
+3. Los valores de deviceId y source del escáner y del teclado externo son diferentes.
 
 
-### 4、查看KeyEvent源码进行比较
-简单的查看下keyEvent 的源码，可以明显的看到，设备的虚拟软键盘是把deiveId=KeyCharacterMap.VIRTUAL_KEYBOARD （-1），写死了，所以取该字段的不同来区分是软键盘还是  外接键盘。 目前不打算区分扫描枪和外接键盘。
-
+### 4. Revisar el código fuente de KeyEvent para comparar.
+Al examinar el código fuente de keyEvent, se puede observar claramente que el teclado virtual del dispositivo tiene el valor deiveId=KeyCharacterMap.VIRTUAL_KEYBOARD (-1) fijado de forma estática. Por lo tanto, se utiliza la diferencia en este campo para distinguir entre el teclado virtual y el teclado externo. Actualmente no se tiene previsto distinguir entre el escáner y el teclado externo.
 ```/**
      * Create a new key event.
      *
-     * @param downTime The time (in {@link android.os.SystemClock#uptimeMillis})
-     * at which this key code originally went down.
-     * @param eventTime The time (in {@link android.os.SystemClock#uptimeMillis})
-     * at which this event happened.
-     * @param action Action code: either {@link #ACTION_DOWN},
-     * {@link #ACTION_UP}, or {@link #ACTION_MULTIPLE}.
-     * @param code The key code.
-     * @param repeat A repeat count for down events (> 0 if this is after the
-     * initial down) or event count for multiple events.
+     * @param downTime El tiempo (en {@link android.os.SystemClock#uptimeMillis})
+     * en el que este código de tecla se desactivó originalmente.
+     * @param eventTime El tiempo (en {@link android.os.SystemClock#uptimeMillis})
+     * en el que ocurrió este evento.
+     * @param action Código de acción: {@link #ACTION_DOWN},
+     * {@link #ACTION_UP} o {@link #ACTION_MULTIPLE}.
+     * @param code El código de tecla.
+     * @param repeat Un recuento de repeticiones para eventos de pulsación (> 0 si es después de la
+     * pulsación inicial) o un recuento de eventos para eventos múltiples.
      */
     public KeyEvent(long downTime, long eventTime, int action,
                     int code, int repeat) {
@@ -59,20 +58,20 @@ android 设备外接一个 标准扫码枪，要把扫码枪扫到的内容取�
     
 
     /**
-     * Create a new key event.
+     * Crear un nuevo evento de tecla.
      *
-     * @param downTime The time (in {@link android.os.SystemClock#uptimeMillis})
-     * at which this key code originally went down.
-     * @param eventTime The time (in {@link android.os.SystemClock#uptimeMillis})
-     * at which this event happened.
-     * @param action Action code: either {@link #ACTION_DOWN},
-     * {@link #ACTION_UP}, or {@link #ACTION_MULTIPLE}.
-     * @param code The key code.
-     * @param repeat A repeat count for down events (> 0 if this is after the
-     * initial down) or event count for multiple events.
-     * @param metaState Flags indicating which meta keys are currently pressed.
-     * @param deviceId The device ID that generated the key event.
-     * @param scancode Raw device scan code of the event.
+     * @param downTime El tiempo (en {@link android.os.SystemClock#uptimeMillis})
+     * en el que este código de tecla se pulsó originalmente.
+     * @param eventTime El tiempo (en {@link android.os.SystemClock#uptimeMillis})
+     * en el que se produjo este evento.
+     * @param action Código de acción: {@link #ACTION_DOWN},
+     * {@link #ACTION_UP} o {@link #ACTION_MULTIPLE}.
+     * @param code El código de tecla.
+     * @param repeat Un recuento de repeticiones para eventos de pulsación (> 0 si es después de la
+     * pulsación inicial) o un recuento de eventos para eventos múltiples.
+     * @param metaState Indicadores que muestran qué teclas meta están pulsadas actualmente.
+     * @param deviceId El ID del dispositivo que generó el evento de tecla.
+     * @param scancode Código de exploración del dispositivo sin procesar del evento.
      */
     public KeyEvent(long downTime, long eventTime, int action,
                     int code, int repeat, int metaState,
@@ -87,52 +86,51 @@ android 设备外接一个 标准扫码枪，要把扫码枪扫到的内容取�
         mScanCode = scancode;
     }
 ```
-### 5、拦截策略
-需要一点android “事件传递” 的基础知识，面试必备知识。以前也记录过：[Android 事件传递与焦点处理(tv)](https://blog.csdn.net/lckj686/article/details/44858387)
-在Activity 中事件传递，特别是按键的拦截其实很方便，重写dispatchKeyEvent 方法就可以了。重写的思路也很简单：判断是不是扫描枪用deviceId == -1 来判断。
-伪代码
+### 5, Estrategia de interceptación
+Se requieren algunos conocimientos básicos sobre la «transmisión de eventos» en Android, algo imprescindible para una entrevista de trabajo. Ya lo he mencionado anteriormente:[Android 事件传递与焦点处理(tv)](https://blog.csdn.net/lckj686/article/details/44858387)
+La transmisión de eventos en Activity, especialmente la interceptación de teclas, es muy conveniente. Basta con reescribir el método dispatchKeyEvent. La idea de la reescritura también es muy sencilla: se determina si se trata de un escáner utilizando deviceId == -1.
+Pseudocódigo
 
 ```@Override
    public boolean dispatchKeyEvent(KeyEvent event) {
         Log.d(TAG, "event= " + event);
 
-        if (如果是扫描枪的事件) {
-         //直接消费掉，不继续向下传，editTextView也不自动填充了，KEYCODE_ENTER 事件也不影响 其它控件了，比如button 的点击事件
+        if (Si se trata de un incidente relacionado con un escáner de código de barras.) {
+         //Se consume directamente, sin transmitirse hacia abajo. El editTextView tampoco se rellena automáticamente, y el evento KEYCODE_ENTER tampoco afecta a otros controles, como el evento de clic del botón.
             return true;
         }
 
         return super.dispatchKeyEvent(event);
     }
 ```
-实际使用中，往往没有这么暴力，比如要对是否完全拦截进行控制，单独封装管理工具类，这些属于封装技巧了，在章末有简单封装
-
+En la práctica, las cosas no suelen ser tan drásticas. Por ejemplo, se puede controlar si se bloquea por completo o no, o encapsular por separado las herramientas de gestión. Estas son técnicas de encapsulación, y al final del capítulo se ofrece un ejemplo sencillo de encapsulación.
 ```/**
      * 处理输入事件
      *
      * @param event
-     * @return true 表示消费掉，拦截不在传递， false 不管
+     * @return true Indica que se ha consumido, la interceptación no se transmite, false no importa.
      */
     public boolean dispatchKeyEvent(KeyEvent event) {
 
         /**
-         * 系统的软键盘  按下去是 -1, 不管，不拦截
+         * El teclado virtual del sistema: al pulsarlo, se muestra -1, sin importar, no se intercepta.
          */
         if (event.getDeviceId() == -1) {
             return false;
         }
 
-        //按下弹起，识别到弹起的话算一次 有效输入
-        //只要是 扫码枪的事件  都要把他消费掉 不然会被editText 显示出来
+        //Al pulsar y soltar, si se detecta el movimiento de pulsar y soltar, se cuenta como una entrada válida.
+        //Cualquier evento relacionado con el escáner de códigos de barras debe ser procesado; de lo contrario, se mostrará en el campo de texto editable.
         if (event.getAction() == KeyEvent.ACTION_UP) {
 
-            //只要数字，一维码里面没有 字母
+            //Solo números, no hay letras en el código unidimensional.
             int code = event.getKeyCode();
             if (code >= KeyEvent.KEYCODE_0 && code <= KeyEvent.KEYCODE_9) {
 
                 codeStr += (code - KeyEvent.KEYCODE_0);
             }
 
-            //识别到结束，当下使用的设备是  是还会有个KEYCODE_DPAD_DOWN 事件，不知道其它设备有没有  先忽略
+            //Una vez finalizada la identificación, el dispositivo actualmente en uso es  . También se producirá un evento KEYCODE_DPAD_DOWN. No sé si otros dispositivos también lo tienen.  Ignóralo por ahora.
             if (code == KeyEvent.KEYCODE_ENTER) {
 
                 if (listener != null) {
@@ -142,26 +140,25 @@ android 设备外接一个 标准扫码枪，要把扫码枪扫到的内容取�
             }
 
         }
-        //都是扫码枪来的事件，选择消费掉
+        //Todos los incidentes relacionados con los escáneres de códigos de barras, optar por consumirlos.
 
         return isInterrupt;
     }
 ```
-### 6、其它处理
-项目需要外接扫码枪，扫码枪有几种模式：
-1. 短按触发扫码，松开停止
-2. 短按触发，连续扫码
-3. 感应触发，超时停止 （项目中会用这种方式）
+### 6. Otros tratamientos
+El proyecto requiere un escáner de códigos de barras externo, que tiene varios modos de funcionamiento:
+1. Pulsación corta para iniciar el escaneo, soltar para detenerlo.
+2. Pulsación corta para iniciar el escaneo continuo.
+3. Activación por sensor, se detiene tras un tiempo de espera (este es el modo que se utilizará en el proyecto).
 
-描述这个的原因是，会涉及不相关界面的误操作，比如在x界面，我们去扫码了。如果不处理会导致KEYCODE_ENTER 会响应该界面中的某个按钮点击事件，造成干扰。so 我们需要在这个项目的基类BaseActivity 中对扫码枪的输入事件进行处理。目前我打算使用的处理策略是，BaseActivity 完全拦截扫码枪事件，需要使用到的界面自行打开。这边的处理算封装上的处理就不熬述了，具体见demo代码
+La razón por la que describo esto es que puede dar lugar a errores de manejo en interfaces no relacionadas, por ejemplo, en la interfaz x, donde escaneamos un código. Si no se gestiona, KEYCODE_ENTER responderá a un evento de clic en un botón de esa interfaz, lo que causará interferencias. Por lo tanto, necesitamos gestionar los eventos de entrada del escáner de códigos en la clase base BaseActivity de este proyecto. Actualmente, la estrategia de tratamiento que pretendo utilizar es que BaseActivity intercepte completamente los eventos del escáner de códigos de barras y que la interfaz que se necesite se abra por sí misma. El tratamiento aquí se considera un tratamiento de encapsulación, por lo que no lo describiré en detalle. Para más información, consulte el código de demostración.
+### 7. Ejemplos y referencias
+#### Nota:
+La función AccessibilityService debe activarse manualmente en: Ajustes -> Accesibilidad -> Servicios. Se requiere formación humana, pero la interacción no es lo suficientemente intuitiva, por lo que se ha descartado.
 
-### 7、付例与参考
-#### 注：
-AccessibilityService 的方式，需要手动在：设置->无障碍->服务，中开启，需要人力培训交互不够友好放弃了
-
-#### 参考：
+#### Referencia:
 [1]、https://stackoverflow.com/questions/11349542/handle-barcode-scanner-value-via-android-device
 [2]、https://blog.csdn.net/csdnno/article/details/79639426
 
-#### 工程demo
-代码：https://github.com/lckj686/BarcodeScannerGunMaster
+#### Demostración del proyecto
+Código: https://github.com/lckj686/BarcodeScannerGunMaster

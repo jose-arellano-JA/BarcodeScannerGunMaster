@@ -16,7 +16,7 @@
         android:id="@+id/btn_test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试，enter事件有没有被拦截" />
+        android:text="Prueba: ¿Se ha interceptado el evento enter?" />
     <EditText
         android:id="@+id/ev_demo"
         android:layout_width="match_parent"
